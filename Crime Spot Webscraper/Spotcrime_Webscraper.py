@@ -30,7 +30,7 @@ def dates():
     y = 2010
     Dates_List = []
 # for loop that generates dates.
-    for n in range(2160):
+    for n in range(3080):
 
         if d > 31:
             d = 1
@@ -71,7 +71,7 @@ with open('eggs.csv', 'w', newline='') as csvfile:
     spamwriter.writerow(['Spam', 'Lovely Spam', 'Wonderful Spam'])
 '''
 
-counter = 0
+#counter = 0
 #w = open("unicode_test.txt", "w")
 
 with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
