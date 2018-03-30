@@ -25,9 +25,9 @@ def request_page(site):
 #Method to create list of dates to feed to the url string.
 #zfill(number) only works on a string
 def dates():
-    d = 8
-    m = 7
-    y = 2012
+    d = 1
+    m = 1
+    y = 2010
     Dates_List = []
 # for loop that generates dates.
     for n in range(2160):
@@ -75,7 +75,7 @@ counter = 0
 #w = open("unicode_test.txt", "w")
 
 with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
-    fieldnames = ['Crime', 'Date', "Address", "lat", 'Long']
+    fieldnames = ['Crime', 'Date', "Address", "Lat", 'Long', 'Link']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     writer.writeheader()
@@ -83,15 +83,18 @@ with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
     for D in Dates:
         URL = Web_Page + D
         print(URL)
-        soup = request_page("https://spotcrime.com/ca/san+jose/daily-blotter/2018-03-26")
+        # Test Page: "https://spotcrime.com/ca/san+jose/daily-blotter/2018-03-26"
+        soup = request_page(URL)
 
-        time.sleep(1)
-
+        time.sleep(2)
+# Code for testing, limits how many pages are webscraped
+        '''
         counter += 1
         if counter == 2:
             #w.close()
             break
-        #for a in soup.find_all('a', href=True):
+        '''
+        #for loop to grab information from the table before getting lat and long from the details link
         for tr in soup.find_all('tr')[2:]:
             link = str(tr.find_all('a',href=True))
             tds = tr.find_all('td')
@@ -99,9 +102,15 @@ with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
             Datee = tds[2].text
             Address = tds[3].text
             print(Crime, Datee, Address)
+##########################################################################
+            # Using a continue to pass over "Other" crime categories
+            if Crime == "Other":
+                print("Other Detected: Skipping")
+                continue
+
 ###########################################################################
 # Sleeps for a second to avoid server lockout
-            time.sleep(1)
+            time.sleep(2)
 ############################################################################
             #Next This section gets the link from the table and requests it
             link = link[10:-30]
@@ -110,17 +119,34 @@ with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
             coor_page = coor.content
 
 #############################################################################
-            # This section gets the lat and long of that specific page.
+            # This section gets the lat and long of that specific page.(Commented out code was first attempt (worked but final
+            # version is more reliable))
             coor_soup = BeautifulSoup(coor_page, 'html.parser')
-
+            #Gets string of meta that has the lat long
             coor_lat = str(coor_soup.find("meta", itemprop="latitude"))
-            coor_long = str(coor_soup.find("meta", itemprop="longitude"))
+            #coor_long = str(coor_soup.find("meta", itemprop="longitude"))
 
-            lat = coor_lat[15:-82]
-            long = coor_long[15:-24]
-            print(coor_lat)
-            print("------------------------")
-            print(coor_long)
+            #lat = coor_lat[15:-82]
+            #long = coor_long[15:-24]
+
+            coor_space = coor_lat.replace('"', ' ')
+            #print("------------------------")
+
+            #Splits string so that the lat and long will be in list at element 2 and 8
+            coor_list = coor_space.split()
+
+
+            # FOR LOOP TO QUICKLY CHECK that the string has been split.
+            '''
+            for word in coor_list:
+                print(word)
+            '''
+            #print("------------------------")
+            #print(coor_lat)
+            lat = coor_list[2]
+            long = coor_list[8]
+            #print(coor_list[2], coor_list[8])
+            #print("------------------------")
             print(link, lat, long)
 
 
@@ -135,7 +161,7 @@ with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
 
 
             #Copys all scraped information into the csv.
-  #          writer.writerow({'Crime': str(Crime), 'Date': str(Datee), 'Address': str(link), 'Lat': str(), 'Long': str()})
+            writer.writerow({'Crime': str(Crime), 'Date': str(Datee), 'Address': str(Address), 'Lat': str(lat), 'Long': str(long), 'Link':str(link)})
 
 
 # Example Code for writing into a blank CSV
@@ -149,58 +175,6 @@ with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
     writer.writerow({'first_name': 'Wonderful', 'last_name': 'Spam'})
 
 '''
-'''
-def request_page(site):
 
-    # This code goes ahead and grabs the html code from nay website given.
-    page = requests.get(site)
-
-    contents = page.content
-
-    #bs4 organization
-    soup = BeautifulSoup(contents, 'html.parser')
-    # Assigned all tags of td to a variable that is a list of all such tags.
-    return soup
-
-
-def date_range():
-    day = 0
-    year = 0
-    month = 0
-
-
-page = "https://spotcrime.com/ca/san+jose/daily-blotter/2018-03-22"
-
-Data = request_page(page)
-
-for tr in Data.find('tr')[2:]:
-    tds = tr.find_all('td')
-    print("Crime: ", tds[1].text)
-
-
-'''
-
-#counter = 40
-
-#for tr in soup.find_all('tr')[2:]:
-#    tds = tr.find_all('td')
-#    print "Crime: %s, Date: %s, Address: %s, Link: %s" % \
-#          (tds[1].text, tds[2].text, tds[3].text, tds[4].text)
-
-#for n in xrange(counter):
-    #print type(n)
-#    reg = regex.compile(r"\b[0-9]{1,3}(?:\s\p{L}+)+")
-    #reg = regex.compile(r"\d{1,5}\s\w.\s(\b\w*\b\s){1,2}\w*\.")
-#    reg_M = regex.match("Theft", str(td_tag[n]))
-#    print reg_M
-
- #   text = str(td_tag[n])
- #   print text
-
-    #print td_tag[n]
-    #print reg.search(str(td_tag[n]))
-    #print"___________________________________________"
-    #print reg_M.match(str(td_tag[n]))
-
-print("----------------------Test Output Bellow------------------------")
+print("----------------------DONE------------------------")
 
