@@ -71,11 +71,11 @@ with open('eggs.csv', 'w', newline='') as csvfile:
     spamwriter.writerow(['Spam', 'Lovely Spam', 'Wonderful Spam'])
 '''
 
-#counter = 0
+counter = 0
 #w = open("unicode_test.txt", "w")
 
 with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
-    fieldnames = ['Crime', 'Date', "Address"]
+    fieldnames = ['Crime', 'Date', "Address", "lat", 'Long']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     writer.writeheader()
@@ -83,23 +83,59 @@ with open('Spotcrime.csv', 'w', newline='', encoding='utf-8') as csvfile:
     for D in Dates:
         URL = Web_Page + D
         print(URL)
-        soup = request_page(URL)
+        soup = request_page("https://spotcrime.com/ca/san+jose/daily-blotter/2018-03-26")
 
         time.sleep(1)
 
-        #counter += 1
-        #if counter == 5:
+        counter += 1
+        if counter == 2:
             #w.close()
-            #break
-
+            break
+        #for a in soup.find_all('a', href=True):
         for tr in soup.find_all('tr')[2:]:
+            link = str(tr.find_all('a',href=True))
             tds = tr.find_all('td')
             Crime = tds[1].text
             Datee = tds[2].text
-            Address = tds[4].text
+            Address = tds[3].text
             print(Crime, Datee, Address)
-            #w.write(Crime + Datee + Address)
-            writer.writerow({'Crime': str(Crime), 'Date': str(Datee), 'Address': str(Address)})
+###########################################################################
+# Sleeps for a second to avoid server lockout
+            time.sleep(1)
+############################################################################
+            #Next This section gets the link from the table and requests it
+            link = link[10:-30]
+            link = ('%s%s' % ('https://spotcrime.com', link))
+            coor = requests.get(str(link))
+            coor_page = coor.content
+
+#############################################################################
+            # This section gets the lat and long of that specific page.
+            coor_soup = BeautifulSoup(coor_page, 'html.parser')
+
+            coor_lat = str(coor_soup.find("meta", itemprop="latitude"))
+            coor_long = str(coor_soup.find("meta", itemprop="longitude"))
+
+            lat = coor_lat[15:-82]
+            long = coor_long[15:-24]
+            print(coor_lat)
+            print("------------------------")
+            print(coor_long)
+            print(link, lat, long)
+
+
+        #page = requests.get(site)
+
+        #contents = page.content
+
+        # bs4 organization
+        #soup = BeautifulSoup(contents, 'html.parser')
+
+##############################################################################
+
+
+            #Copys all scraped information into the csv.
+  #          writer.writerow({'Crime': str(Crime), 'Date': str(Datee), 'Address': str(link), 'Lat': str(), 'Long': str()})
 
 
 # Example Code for writing into a blank CSV

@@ -1,9 +1,1 @@
-Crime,Date,Address
-Assault,07/08/12. 07:33 PM.,Details
-Assault,07/08/12. 10:30 AM.,Details
-Robbery,07/10/12. 07:35 AM.,Details
-Burglary,07/10/12. 02:40 AM.,Details
-Arrest,07/12/12. 01:56 PM.,Details
-Arrest,07/12/12. 04:30 PM.,Details
-Burglary,07/12/12. 02:53 PM.,Details
-Burglary,07/12/12. 01:56 PM.,Details
+Crime,Date,Address,lat,Long
