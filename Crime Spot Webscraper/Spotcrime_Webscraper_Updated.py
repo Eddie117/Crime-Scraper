@@ -1,21 +1,22 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
-import re
 import time
 import html
 import datetime
-import urllib.request
-#import regex
+
 
 #######################GLOBAL VARIABLES################################################
 
 #Daily_Web_URL_part_1 = "https://spotcrime.com/ca/san+jose/daily-blotter/"
-Daily_Web_URL_part_1 = "https://spotcrime.com/mi/ann+arbor/daily-blotter/"
-Start_Year = 2010
-Start_Month = 10
-Start_Day = 3
-csv_file = "crime_test.csv"
+Daily_Web_URL_part_1 = "https://spotcrime.com/dc/washington/daily-blotter/"
+Start_Year = 2007
+Start_Month = 8
+Start_Day = 24
+csv_file = "washington_dc_crime2.csv"
+sleep_timer = 2
+#When stop date is None it will use the date the script was started on.
+stop_date = None
 
 
 
@@ -32,13 +33,15 @@ def time_convertion(time):
         if time[2] == 'PM':
             hour = hour + 12
         timestamp = ("%s %s:%s" % (time[0], str(hour).zfill(2), str(min).zfill(2)))
+        time_flag = 0
     except Exception:
         print("Standard TimeStamp Not Detected")
+        time_flag = 1
         check = False
     if check == False:
         print("ONLY ADDING: ", time[0])
         timestamp = time[0]
-    return timestamp
+    return timestamp, time_flag
 
 
 
@@ -72,8 +75,11 @@ def request_page(site):
 #Method to create list of dates to feed to the url string.
 #zfill(number) only works on a string
 def dates():
-    timestamp = datetime.datetime.today()
-    stopdate = timestamp.strftime("%d/%m/%Y")
+    if stop_date == None:
+        timestamp = datetime.datetime.today()
+        stopdate = timestamp.strftime("%d/%m/%Y")
+    else:
+        stopdate = stop_date
     #print(stopdate)
     d = Start_Day
     m = Start_Month
@@ -96,8 +102,7 @@ def dates():
         month = str(m).zfill(2)
         year = str(y)
         date = (str(d).zfill(2) + "/" + str(m).zfill(2) + "/" + str(y))
-        date_str = str(date)
-        #date_final = date_str.replace(" ", "")
+
         #print(date)
         #printing as a tuple to get the output correct.
         Dates_List.append("%s-%s-%s" %  (year, month, day))
@@ -110,25 +115,14 @@ def dates():
 # Dynamic Web URL
 Dates = dates()
 
-# "https://spotcrime.com/ca/san+jose/daily-blotter/2018-03-22"  <-Backup
-
 #First part of webname
 Web_Page = Daily_Web_URL_part_1
-
-#Opens up csv to write too
-'''
-with open('eggs.csv', 'w', newline='') as csvfile:
-    spamwriter = csv.writer(csvfile, delimiter=' ',
-                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(['Spam'] * 5 + ['Baked Beans'])
-    spamwriter.writerow(['Spam', 'Lovely Spam', 'Wonderful Spam'])
-'''
 
 #counter = 0
 #w = open("unicode_test.txt", "w")
 
 with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
-    fieldnames = ['Crime', 'Date', "Address", "Lat", 'Long', 'Details', 'Casenumber','Link']
+    fieldnames = ['Crime', 'Date', "Address", "Lat", 'Long', 'Details', 'Casenumber', 'Link', 'No_Time']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     writer.writeheader()
@@ -139,15 +133,9 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
         print(URL)
         # Test Page: "https://spotcrime.com/ca/san+jose/daily-blotter/2018-03-26"
         soup = request_page(URL)
+        #Sleep time for days page
+        time.sleep(sleep_timer)
 
-        #time.sleep(2)
-# Code for testing, limits how many pages are webscraped
-        '''
-        counter += 1
-        if counter == 2:
-            #w.close()
-            break
-        '''
         #for loop to grab information from the table before getting lat and long from the details link
         #if date does not exist this loop does not execute thus skipping the date.
         for tr in soup.find_all('tr')[1:]: # the number determines where in the table to start collecting data.
@@ -165,7 +153,7 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
             time_list = Datee.split(" ")
             ##########GIVES Datee the formated version for PostGreSQL#############
             Datee = time_convertion(time_list)
-            print(Datee)
+            print(Datee[0])
 
 
 ##########################################################################
@@ -176,19 +164,17 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
 
 ###########################################################################
 # Sleeps for a second to avoid server lockout
-            time.sleep(1.5)
+            time.sleep(sleep_timer)
 ############################################################################
             #Next This section gets the link from the table and requests it
             link = link[10:-30]
             link = ('%s%s' % ('https://spotcrime.com', link))
             #### ADD TRY CATCH TO ATTEMPT TO SPEED UP WEBSCRAPPING############
             coor_soup = request_page(str(link))
-            #coor_page = coor.content
 
 #############################################################################
             # This section gets the lat and long of that specific page.(Commented out code was first attempt (worked but final
             # version is more reliable))
-            #coor_soup = BeautifulSoup(coor_page, 'html.parser')
             #Gets string of meta that has the lat long
             coor_lat = str(coor_soup.find("meta", itemprop="latitude"))
             #coor_long = str(coor_soup.find("meta", itemprop="longitude"))
@@ -206,25 +192,12 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
             except Exception:
                 print("NO CASENUMBER DETECTED")
 
-
-
-            #print(coor_lat)
-
-            #lat = coor_lat[15:-82]
-            #long = coor_long[15:-24]
-
             coor_space = coor_lat.replace('"', ' ')
             #print("------------------------")
 
             #Splits string so that the lat and long will be in list at element 2 and 8
             coor_list = coor_space.split()
 
-
-            # FOR LOOP TO QUICKLY CHECK that the string has been split.
-            '''
-            for word in coor_list:
-                print(word)
-            '''
             #print("------------------------")
             #print(coor_lat)
             lat = coor_list[2]
@@ -233,28 +206,8 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
             #print("------------------------")
             print(link, lat, long)
 
-
-        #page = requests.get(site)
-
-        #contents = page.content
-
-        # bs4 organization
-        #soup = BeautifulSoup(contents, 'html.parser')
-
 ##############################################################################
-
-
             #Copys all scraped information into the csv.
-            writer.writerow({'Crime': str(Crime), 'Date': str(Datee), 'Address': str(Address), 'Lat': str(lat), 'Long': str(long), 'Details': str(details),'Casenumber':casenum, 'Link':str(link)})
-
-
-# Example Code for writing into a blank CSV
-
-'''
-    writer.writeheader()
-    writer.writerow({'first_name': 'Baked', 'last_name': 'Beans'})
-    writer.writerow({'first_name': 'Lovely', 'last_name': 'Spam'})
-    writer.writerow({'first_name': 'Wonderful', 'last_name': 'Spam'})
-'''
+            writer.writerow({'Crime': str(Crime), 'Date': str(Datee[0]), 'Address': str(Address), 'Lat': str(lat), 'Long': str(long), 'Details': str(details),'Casenumber':casenum, 'Link':str(link), 'No_Time': str(Datee[1])})
 
 print("----------------------DONE------------------------")
