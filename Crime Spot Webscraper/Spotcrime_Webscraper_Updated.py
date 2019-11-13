@@ -9,15 +9,15 @@ import datetime
 #######################GLOBAL VARIABLES################################################
 
 #Daily_Web_URL_part_1 = "https://spotcrime.com/ca/san+jose/daily-blotter/"
-Daily_Web_URL_part_1 = "https://spotcrime.com/dc/washington/daily-blotter/"
-Start_Year = 2007
-Start_Month = 8
-Start_Day = 24
-csv_file = "washington_dc_crime2.csv"
+Daily_Web_URL_part_1 = "https://spotcrime.com/ut/salt+lake+city/daily-blotter/"
+Start_Year = 2018
+Start_Month = 5
+Start_Day = 19
+csv_file = "Class_test_eddie.csv"
 sleep_timer = 2
 #When stop date is None it will use the date the script was started on.
 stop_date = None
-
+#stop_date = "31/12/2009"  # Takes it as Day/Month/Year
 
 
 def time_convertion(time):
@@ -195,15 +195,29 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
             coor_space = coor_lat.replace('"', ' ')
             #print("------------------------")
 
-            #Splits string so that the lat and long will be in list at element 2 and 8
-            coor_list = coor_space.split()
+            try:
+                #Splits string so that the lat and long will be in list at element 2 and 8
+                coor_list = coor_space.split()
 
-            #print("------------------------")
-            #print(coor_lat)
-            lat = coor_list[2]
-            long = coor_list[8]
-            #print(coor_list[2], coor_list[8])
-            #print("------------------------")
+                #print("------------------------")
+                #print(coor_lat)
+                lat = coor_list[2]
+                long = coor_list[8]
+                #print(coor_list[2], coor_list[8])
+                #print("------------------------")
+            except Exception:
+                print("------FAILED--------" * 20)
+                print("------FAILED--------" * 20)
+                print("------FAILED--------" * 20)
+                print(coor_list)
+                print(coor_space)
+                print(coor_lat)
+                print("------FAILED--------" * 20)
+                print("------FAILED--------" * 20)
+                print("------FAILED--------" * 20)
+                #Changes lat to empty string so data can keep being collected.
+                lat = "0"
+                long = "0"
             print(link, lat, long)
 
 ##############################################################################
